@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J13 – Cyberpunk Counter</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #000014;
+  color: #9bbcff;
+  font-family: 'Share Tech Mono', monospace;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#card {
+  background: #050015;
+  border: 2px solid #7a6eff;
+  box-shadow: 0 0 15px #4020ff;
+  padding: 25px;
+  width: 350px;
+  max-width: 90vw;
+}
+
+#title {
+  text-align: center;
+  font-size: 1.3em;
+  margin-bottom: 15px;
+  color: #cbbaff;
+  letter-spacing: 2px;
+}
+
+#info {
+  border: 1px solid #7a6eff;
+  padding: 10px;
+  margin-bottom: 20px;
+  font-size: 0.9em;
+}
+
+.info-line {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0;
+  color: #a8befe;
+}
+
+#value {
+  text-align: center;
+  font-size: 4em;
+  color: #84a5ff;
+  margin: 25px 0;
+  text-shadow: 0 0 12px #7a6eff;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  width: 45%;
+  padding: 12px 0;
+  border: 1px solid #7a6eff;
+  background: #12003a;
+  color: #c7caff;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn:hover {
+  background: #24007a;
+  box-shadow: 0 0 8px #7a6eff;
+}
+</style>
+</head>
+
+<body>
+
+<div id="card">
+
+  <div id="title">SUBJECT: J13</div>
+
+  <div id="info">
+    <div class="info-line"><span>MENTAL STATE</span><span>STABLE</span></div>
+    <div class="info-line"><span>THREAT LEVEL</span><span>LOW</span></div>
+    <div class="info-line"><span>STATUS</span><span>ACTIVE</span></div>
+  </div>
+
+  <div id="value">100</div>
+
+  <div class="buttons">
+    <button class="btn" id="minus">− 5</button>
+    <button class="btn" id="plus">+ 5</button>
+  </div>
+
+</div>
+
+<script>
+let value = 100;
+const storageKey = "counter_J13";
+
+const valueEl = document.getElementById("value");
+const plus = document.getElementById("plus");
+const minus = document.getElementById("minus");
+
+const stored = localStorage.getItem(storageKey);
+if (stored !== null) {
+  const n = parseInt(stored, 10);
+  if (!isNaN(n)) value = n;
+}
+
+function update() {
+  valueEl.textContent = value;
+}
+
+plus.addEventListener("click", () => {
+  value = Math.min(100, value + 5);
+  localStorage.setItem(storageKey, value);
+  update();
+});
+
+minus.addEventListener("click", () => {
+  value = Math.max(0, value - 5);
+  localStorage.setItem(storageKey, value);
+  update();
+});
+
+update();
+</script>
+
+</body>
+</html>
