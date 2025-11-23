@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Joueurs – Contamination</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #020010;
+  color: #e3e7ff;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #ff6bff;
+  text-shadow: 0 0 10px #ff6bff;
+}
+
+#subtitle {
+  text-align: center;
+  font-size: 0.9em;
+  color: #a8befe;
+  margin-bottom: 20px;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+/* CARD PLAYER */
+.player-card {
+  background: #050017;
+  border: 1px solid #6c63ff;
+  box-shadow: 0 0 12px rgba(108,99,255,0.4);
+  padding: 12px;
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.player-id {
+  font-size: 1.1em;
+  color: #cbbaff;
+}
+
+.player-status {
+  font-size: 0.75em;
+  color: #a8befe;
+}
+
+/* BAR / VALUE */
+.value-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  margin-bottom: 6px;
+}
+
+.bar-container {
+  width: 100%;
+  height: 12px;
+  background: #151533;
+  border: 1px solid #444;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+}
+
+/* couleurs selon niveau */
+.bar.safe {
+  background: #2ecc71;
+}
+.bar.medium {
+  background: #f1c40f;
+}
+.bar.low {
+  background: #e74c3c;
+}
+
+/* refresh */
+#refresh-info {
+  text-align: center;
+  font-size: 0.8em;
+  color: #8894ff;
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>DASHBOARD JOUEURS</h1>
+<div id="subtitle">Lecture des valeurs depuis JSONBin</div>
+
+<div id="grid"></div>
+
+<div id="refresh-info">Actualisation automatique toutes les 5 secondes</div>
+
+<script>
+const binURL = "https://api.jsonbin.io/v3/b/6922f02043b1c97be9bfcb3a/latest";
+const apiKey = "$2a$10$FYbI.UBUR9uUn20mH5/nAesXEm4NPygH2n0HPRBlgSa8j/VmI8LD2";
+
+const playerIds = Array.from({ length: 15 }, (_, i) =>
+  "J" + String(i + 1).padStart(2, "0")
+);
+
+async function loadData() {
+  try {
+    const res = await fetch(binURL, {
+      headers: {
+        "X-Master-Key": apiKey,
+        "X-Bin-Meta": "false"
+      }
+    });
+    const data = await res.json();
+    const record = data.record || data; // au cas où
+
+    renderGrid(record);
+  } catch (err) {
+    console.error("Erreur de lecture JSONBin :", err);
+  }
+}
+
+function getBarClass(value) {
+  if (value >= 70) return "safe";
+  if (value >= 30) return "medium";
+  return "low";
+}
+
+function renderGrid(record) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  playerIds.forEach(id => {
+    let value = record && record[id] != null ? record[id] : 0;
+    if (typeof value !== "number") {
+      const n = parseInt(value, 10);
+      value = isNaN(n) ? 0 : n;
+    }
+    value = Math.max(0, Math.min(100, value));
+
+    const card = document.createElement("div");
+    card.className = "player-card";
+
+    const header = document.createElement("div");
+    header.className = "player-header";
+    header.innerHTML = `
+      <div class="player-id">${id}</div>
+      <div class="player-status">${value >= 30 ? "STABLE" : "CRITIQUE"}</div>
+    `;
+
+    const valLine = document.createElement("div");
+    valLine.className = "value-line";
+    valLine.innerHTML = `
+      <span>MENTAL LEVEL</span>
+      <span>${value}/100</span>
+    `;
+
+    const barContainer = document.createElement("div");
+    barContainer.className = "bar-container";
+
+    const bar = document.createElement("div");
+    bar.className = "bar " + getBarClass(value);
+    bar.style.width = value + "%";
+
+    barContainer.appendChild(bar);
+    card.appendChild(header);
+    card.appendChild(valLine);
+    card.appendChild(barContainer);
+
+    grid.appendChild(card);
+  });
+}
+
+// premier chargement
+loadData();
+// actualisation toutes les 5 sec
+setInterval(loadData, 5000);
+</script>
+
+</body>
+</html>
