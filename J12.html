@@ -94,7 +94,7 @@ body {
     <div class="info-line"><span>STATUS</span><span>ACTIVE</span></div>
   </div>
 
-  <div id="value">100</div>
+  <div id="value">…</div>
 
   <div class="buttons">
     <button class="btn" id="minus">− 5</button>
@@ -104,36 +104,87 @@ body {
 </div>
 
 <script>
-let value = 100;
-const storageKey = "counter_J12";
+const playerId = "J12";
+const binURL = "https://api.jsonbin.io/v3/b/6922f02043b1c97be9bfcb3a";
+const apiKey = "$2a$10$FYbI.UBUR9uUn20mH5/nAesXEm4NPygH2n0HPRBlgSa8j/VmI8LD2";
 
 const valueEl = document.getElementById("value");
 const plus = document.getElementById("plus");
 const minus = document.getElementById("minus");
 
-const stored = localStorage.getItem(storageKey);
-if (stored !== null) {
-  const n = parseInt(stored, 10);
-  if (!isNaN(n)) value = n;
+let currentValue = 100;
+let isBusy = false;
+
+async function loadValue() {
+  try {
+    const res = await fetch(binURL + "/latest", {
+      headers: {
+        "X-Master-Key": apiKey,
+        "X-Bin-Meta": "false"
+      }
+    });
+    const data = await res.json();
+    const record = data.record || data;
+
+    let v = record[playerId];
+    if (typeof v !== "number") {
+      const n = parseInt(v, 10);
+      v = isNaN(n) ? 100 : n;
+    }
+    currentValue = Math.max(0, Math.min(100, v));
+    updateDisplay();
+  } catch (err) {
+    console.error("Erreur de lecture JSONBin :", err);
+    valueEl.textContent = "ERR";
+  }
 }
 
-function update() {
-  valueEl.textContent = value;
+async function saveValue() {
+  try {
+    const res = await fetch(binURL + "/latest", {
+      headers: {
+        "X-Master-Key": apiKey,
+        "X-Bin-Meta": "false"
+      }
+    });
+    const data = await res.json();
+    const record = data.record || data;
+
+    record[playerId] = currentValue;
+
+    await fetch(binURL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": apiKey,
+        "X-Bin-Versioning": "false"
+      },
+      body: JSON.stringify(record)
+    });
+  } catch (err) {
+    console.error("Erreur d'écriture JSONBin :", err);
+  }
 }
 
-plus.addEventListener("click", () => {
-  value = Math.min(100, value + 5);
-  localStorage.setItem(storageKey, value);
-  update();
-});
+function updateDisplay() {
+  valueEl.textContent = currentValue;
+}
 
-minus.addEventListener("click", () => {
-  value = Math.max(0, value - 5);
-  localStorage.setItem(storageKey, value);
-  update();
-});
+async function change(delta) {
+  if (isBusy) return;
+  isBusy = true;
 
-update();
+  currentValue = Math.max(0, Math.min(100, currentValue + delta));
+  updateDisplay();
+  await saveValue();
+
+  isBusy = false;
+}
+
+plus.addEventListener("click", () => change(+5));
+minus.addEventListener("click", () => change(-5));
+
+loadValue();
 </script>
 
 </body>
